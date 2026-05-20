@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { OFFERS } from "../constants/mock-data";
+import { useOffersStore } from "./use-offers-store";
 
 export const useCartStore = create((set) => ({
   cart: {}, // Keyed by: `${id}-${variantName}-${selectedOptionNames.join(",")}`
@@ -43,7 +43,8 @@ export const useCartStore = create((set) => ({
   setNote: (note) => set({ note }),
   applyCoupon: (code) =>
     set(() => {
-      const matched = OFFERS.find(
+      const activeOffers = useOffersStore.getState().offers || [];
+      const matched = activeOffers.find(
         (o) => o.code.toLowerCase() === code.toLowerCase()
       );
       return { coupon: matched || null };

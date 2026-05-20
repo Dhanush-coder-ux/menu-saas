@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Home, Package, Utensils, Sparkles, Scan, BarChart3, Settings, 
-  Bell, Sun, Moon, LogOut, Menu, X, Smartphone, Globe, ChevronDown, Check
+  Bell, LogOut, Menu, X, ChevronDown, Check, Globe
 } from "lucide-react";
-import { NAV, PAGE_TITLES, NOTIFS } from "../constants/config";
+import { PAGE_TITLES, NOTIFS } from "../constants/config";
+import { THEMES } from "../constants/themes";
 import { useAuthStore } from "../store/use-auth-store";
 import { useThemeStore } from "../store/use-theme-store";
 import { useLangStore } from "../store/use-lang-store";
@@ -12,31 +12,27 @@ import { useShopStore } from "../features/customer/store/use-shop-store";
 import { SHOPS_DATABASE } from "../features/customer/mock/shops-database";
 import Button from "../components/ui/Button";
 
+// Import Extensible Sidebar Menu Config
+import { SIDEBAR_SECTIONS } from "./SideBarList";
+
 export default function DashboardLayout({ children, page, navigate }) {
   const { logout, user } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
   const { lang, setLang } = useLangStore();
-  const { currentShop, loadShop } = useShopStore();
+  const { currentShop: rawShop, loadShop } = useShopStore();
   
+  const currentShop = rawShop || {
+    logo: "🏪",
+    shopName: user?.businessName || "Cafe Aroma",
+    shopSlug: "fresh-cafe"
+  };
+
   const [showNotif, setShowNotif] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showShopDropdown, setShowShopDropdown] = useState(false);
 
   const pageInfo = PAGE_TITLES[page] || PAGE_TITLES.dashboard;
-
-  const getIcon = (id) => {
-    switch (id) {
-      case "dashboard": return <Home className="w-4 h-4" />;
-      case "orders": return <Package className="w-4 h-4" />;
-      case "menu": return <Utensils className="w-4 h-4" />;
-      case "ai-upload": return <Sparkles className="w-4 h-4 text-violet-400" />;
-      case "qr": return <Scan className="w-4 h-4" />;
-      case "analytics": return <BarChart3 className="w-4 h-4" />;
-      case "settings": return <Settings className="w-4 h-4" />;
-      default: return <Home className="w-4 h-4" />;
-    }
-  };
 
   const currentThemeId = theme.id;
   const isDarkMode = currentThemeId === "cafe" || currentThemeId === "dark";
@@ -47,19 +43,19 @@ export default function DashboardLayout({ children, page, navigate }) {
       <aside className={`hidden md:flex flex-col w-60 h-screen sticky top-0 border-r shrink-0 overflow-y-auto ${theme.accentBorder} ${theme.cardClass}`}>
         
         {/* Interactive Multi-Tenant Shop Selector Swapper */}
-        <div className="p-4 border-b border-white/5 relative">
+        <div className={`p-4 border-b relative ${theme.dividerClass || "border-white/5"}`}>
           <button
             onClick={() => setShowShopDropdown(!showShopDropdown)}
-            className="w-full flex items-center justify-between p-2.5 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all text-left cursor-pointer"
+            className={`w-full flex items-center justify-between p-2.5 rounded-2xl border transition-all text-left cursor-pointer ${theme.buttonSecondary || "bg-white/5 border-white/5 text-slate-300 hover:bg-white/10"}`}
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <span className="text-2xl shrink-0 select-none">{currentShop.logo}</span>
               <div className="min-w-0">
-                <div className="text-xs font-black text-slate-200 truncate leading-tight">{currentShop.shopName}</div>
+                <div className={`text-xs font-black truncate leading-tight ${theme.textClass || "text-slate-200"}`}>{currentShop.shopName}</div>
                 <span className="text-[8px] text-violet-400 font-extrabold uppercase tracking-widest block mt-0.5">SaaS Partner</span>
               </div>
             </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-1" />
+            <ChevronDown className={`w-3.5 h-3.5 shrink-0 ml-1 ${theme.subtextClass || "text-slate-500"}`} />
           </button>
 
           <AnimatePresence>
@@ -70,9 +66,9 @@ export default function DashboardLayout({ children, page, navigate }) {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="absolute left-4 right-4 mt-2 p-1.5 bg-slate-900 border border-white/8 rounded-2xl shadow-2xl z-50 text-left space-y-0.5"
+                  className={`absolute left-4 right-4 mt-2 p-1.5 border rounded-2xl shadow-2xl z-50 text-left space-y-0.5 ${theme.dropdownClass || "bg-slate-900 border-white/8 text-slate-200"}`}
                 >
-                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block px-2.5 py-1">Active Slugs Switcher</span>
+                  <span className={`text-[8px] font-black uppercase tracking-widest block px-2.5 py-1 ${theme.subtextClass || "text-slate-500"}`}>Active Slugs Switcher</span>
                   {Object.values(SHOPS_DATABASE).map((s) => {
                     const isSelected = currentShop.shopSlug === s.shopSlug;
                     return (
@@ -83,7 +79,9 @@ export default function DashboardLayout({ children, page, navigate }) {
                           setShowShopDropdown(false);
                         }}
                         className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          isSelected ? "bg-primary text-white" : "text-slate-400 hover:text-white hover:bg-white/5"
+                          isSelected 
+                            ? (theme.sidebarActive || "bg-primary text-white") 
+                            : `${theme.subtextClass || "text-slate-400"} ${theme.sidebarHover || "hover:text-white hover:bg-white/5"}`
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -100,86 +98,51 @@ export default function DashboardLayout({ children, page, navigate }) {
           </AnimatePresence>
         </div>
 
+        {/* Desktop Dynamic Sidebar Section Menu */}
         <nav className="flex-1 px-4 py-6 space-y-7">
-          <div>
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block px-3 mb-2">Main Controls</span>
-            <div className="space-y-1">
-              {NAV.slice(0, 4).map((n) => (
-                <div
-                  key={n.id}
-                  onClick={() => navigate(n.id)}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer ${
-                    page === n.id 
-                      ? "bg-primary text-white shadow-md shadow-primary/20" 
-                      : "text-slate-400 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  <span>{getIcon(n.id)}</span>
-                  <span>{n.label}</span>
-                  {n.badge && (
-                    <span className="ml-auto bg-pink-500 text-white font-extrabold text-[9px] px-1.5 py-0.5 rounded-full">
-                      {n.badge}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block px-3 mb-2">Reports & Setup</span>
-            <div className="space-y-1">
-              {NAV.slice(4).map((n) => (
-                <div
-                  key={n.id}
-                  onClick={() => navigate(n.id)}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer ${
-                    page === n.id 
-                      ? "bg-primary text-white shadow-md shadow-primary/20" 
-                      : "text-slate-400 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  <span>{getIcon(n.id)}</span>
-                  <span>{n.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block px-3 mb-2">Previews</span>
-            <div className="space-y-1">
-              <div 
-                onClick={() => navigate("customer")}
-                className="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold text-slate-400 hover:text-white hover:bg-white/5 cursor-pointer"
-              >
-                <Smartphone className="w-4 h-4 text-emerald-400" />
-                <span>Customer App</span>
-              </div>
-              <div 
-                onClick={() => navigate("landing")}
-                className="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold text-slate-400 hover:text-white hover:bg-white/5 cursor-pointer"
-              >
-                <Globe className="w-4 h-4 text-violet-400" />
-                <span>Landing Page</span>
+          {SIDEBAR_SECTIONS.map((section) => (
+            <div key={section.title}>
+              <span className={`text-[10px] font-bold uppercase tracking-widest block px-3 mb-2 ${theme.subtextClass || "text-slate-500"}`}>
+                {section.title}
+              </span>
+              <div className="space-y-1">
+                {section.items.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => navigate(item.id)}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer ${
+                      page === item.id 
+                        ? (theme.sidebarActive || "bg-primary text-white shadow-md shadow-primary/20") 
+                        : `${theme.subtextClass || "text-slate-400"} ${theme.sidebarHover || "hover:text-white hover:bg-white/5"}`
+                    }`}
+                  >
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
+                    {item.defaultBadge && (
+                      <span className="ml-auto bg-pink-500 text-white font-extrabold text-[9px] px-1.5 py-0.5 rounded-full">
+                        {item.defaultBadge}
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
+          ))}
         </nav>
 
         {/* Sidebar Footer User Card */}
-        <div className="p-4 border-t border-white/5">
-          <div className="flex items-center gap-3 p-2 rounded-2xl bg-white/5 border border-white/5">
+        <div className={`p-4 border-t ${theme.dividerClass || "border-white/5"}`}>
+          <div className={`flex items-center gap-3 p-2 rounded-2xl border ${theme.buttonSecondary || "bg-white/5 border-white/5 text-slate-300"}`}>
             <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-violet-600 to-pink-600 flex items-center justify-center font-bold text-xs text-white">
               {currentShop.logo}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-bold truncate">{currentShop.shopName}</div>
+              <div className={`text-xs font-bold truncate ${theme.textClass || "text-slate-200"}`}>{currentShop.shopName}</div>
               <div className="text-[9px] text-emerald-400 font-bold uppercase tracking-wide">Growth Plan</div>
             </div>
             <button 
               onClick={() => { logout(); navigate("landing"); }}
-              className="text-slate-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 cursor-pointer"
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${theme.subtextClass || "text-slate-400"} hover:text-rose-400 hover:bg-rose-500/10`}
               title="Logout"
             >
               <LogOut className="w-4 h-4" />
@@ -215,38 +178,32 @@ export default function DashboardLayout({ children, page, navigate }) {
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <nav className="flex-1 space-y-6">
-                <div className="space-y-1">
-                  {NAV.map((n) => (
-                    <div
-                      key={n.id}
-                      onClick={() => { navigate(n.id); setShowMobileMenu(false); }}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold cursor-pointer ${
-                        page === n.id ? "bg-primary text-white" : "text-slate-400 hover:text-white"
-                      }`}
-                    >
-                      <span>{getIcon(n.id)}</span>
-                      <span>{n.label}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="border-t border-white/5 pt-4 space-y-1">
-                  <div 
-                    onClick={() => { navigate("customer"); setShowMobileMenu(false); }}
-                    className="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold text-slate-400 cursor-pointer"
-                  >
-                    <Smartphone className="w-4 h-4 text-emerald-400" />
-                    <span>Customer App</span>
+              
+              {/* Mobile Dynamic Sidebar Section Menu */}
+              <nav className="flex-1 space-y-6 overflow-y-auto no-scrollbar">
+                {SIDEBAR_SECTIONS.map((section) => (
+                  <div key={section.title} className="space-y-1">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest block px-3 mb-1">
+                      {section.title}
+                    </span>
+                    {section.items.map((item) => (
+                      <div
+                        key={item.id}
+                        onClick={() => { navigate(item.id); setShowMobileMenu(false); }}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold cursor-pointer ${
+                          page === item.id 
+                            ? "bg-primary text-white" 
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        <span>{item.icon}</span>
+                        <span>{item.label}</span>
+                      </div>
+                    ))}
                   </div>
-                  <div 
-                    onClick={() => { navigate("landing"); setShowMobileMenu(false); }}
-                    className="flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold text-slate-400 cursor-pointer"
-                  >
-                    <Globe className="w-4 h-4 text-violet-400" />
-                    <span>Landing Page</span>
-                  </div>
-                </div>
+                ))}
               </nav>
+              
               <div className="border-t border-white/5 pt-4">
                 <Button variant="danger" className="w-full py-2.5 justify-center" onClick={() => { logout(); navigate("landing"); }}>
                   <LogOut className="w-4 h-4 mr-1" /> Logout
@@ -264,13 +221,13 @@ export default function DashboardLayout({ children, page, navigate }) {
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setShowMobileMenu(true)}
-              className="md:hidden p-2 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white cursor-pointer"
+              className={`md:hidden p-2 rounded-xl border cursor-pointer ${theme.buttonSecondary || "bg-white/5 border-white/5 text-slate-400 hover:text-white"}`}
             >
               <Menu className="w-4 h-4" />
             </button>
             <div>
-              <h2 className="text-sm font-bold tracking-tight">{pageInfo.title}</h2>
-              <p className="text-[10px] text-slate-500 font-medium">{pageInfo.sub}</p>
+              <h2 className={`text-sm font-bold tracking-tight ${theme.textClass || "text-slate-100"}`}>{pageInfo.title}</h2>
+              <p className={`text-[10px] font-medium ${theme.subtextClass || "text-slate-500"}`}>{pageInfo.sub}</p>
             </div>
           </div>
 
@@ -279,7 +236,7 @@ export default function DashboardLayout({ children, page, navigate }) {
             <div className="relative">
               <button 
                 onClick={() => setShowLangMenu(!showLangMenu)}
-                className="px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-white transition-all cursor-pointer"
+                className={`px-2.5 py-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer ${theme.buttonSecondary || "bg-white/5 border-white/5 text-slate-400 hover:text-white"}`}
               >
                 <Globe className="w-3.5 h-3.5 text-violet-400" />
                 <span className="uppercase">{lang}</span>
@@ -288,13 +245,15 @@ export default function DashboardLayout({ children, page, navigate }) {
               {showLangMenu && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowLangMenu(false)} />
-                  <div className="absolute right-0 mt-2 w-28 rounded-2xl bg-slate-900 border border-white/5 p-1.5 shadow-2xl z-20">
+                  <div className={`absolute right-0 mt-2 w-28 rounded-2xl border p-1.5 shadow-2xl z-20 ${theme.dropdownClass || "bg-slate-900 border-white/5"}`}>
                     {[{ c: "en", label: "English" }, { c: "ta", label: "தமிழ்" }, { c: "hi", label: "हिन्दी" }].map((l) => (
                       <button
                         key={l.c}
                         onClick={() => { setLang(l.c); setShowLangMenu(false); }}
                         className={`w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold ${
-                          lang === l.c ? "bg-primary text-white" : "text-slate-400 hover:text-white hover:bg-white/5"
+                          lang === l.c 
+                            ? (theme.sidebarActive || "bg-primary text-white") 
+                            : `${theme.subtextClass || "text-slate-400"} ${theme.sidebarHover || "hover:text-white hover:bg-white/5"}`
                         }`}
                       >
                         {l.label}
@@ -309,7 +268,7 @@ export default function DashboardLayout({ children, page, navigate }) {
             <div className="relative">
               <button 
                 onClick={() => setShowNotif(!showNotif)}
-                className="w-9 h-9 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 relative cursor-pointer"
+                className={`w-9 h-9 rounded-xl border flex items-center justify-center relative cursor-pointer ${theme.buttonSecondary || "bg-white/5 border-white/5 text-slate-400 hover:text-white"}`}
               >
                 <Bell className="w-4 h-4 animate-bounce" />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 border border-slate-950" />
@@ -317,18 +276,18 @@ export default function DashboardLayout({ children, page, navigate }) {
               {showNotif && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowNotif(false)} />
-                  <div className="absolute right-0 mt-2 w-72 rounded-3xl bg-slate-900 border border-white/5 shadow-2xl z-20 overflow-hidden text-left">
-                    <div className="px-5 py-4 border-b border-white/5 flex justify-between items-center bg-slate-950/20">
-                      <span className="text-xs font-bold">Notifications</span>
+                  <div className={`absolute right-0 mt-2 w-72 rounded-3xl border shadow-2xl z-20 overflow-hidden text-left ${theme.dropdownClass || "bg-slate-900 border-white/5"}`}>
+                    <div className={`px-5 py-4 border-b flex justify-between items-center bg-slate-950/20 ${theme.dividerClass || "border-white/5"}`}>
+                      <span className={`text-xs font-bold ${theme.textClass || "text-white"}`}>Notifications</span>
                       <span className="text-[10px] text-violet-400 hover:underline cursor-pointer font-bold">Mark all read</span>
                     </div>
-                    <div className="divide-y divide-white/5 max-h-60 overflow-y-auto">
+                    <div className={`divide-y max-h-60 overflow-y-auto ${theme.dividerClass || "border-white/5"}`}>
                       {NOTIFS.map((n, i) => (
-                        <div key={i} className="p-4 flex gap-3 items-start hover:bg-white/5 cursor-pointer transition-all">
+                        <div key={i} className={`p-4 flex gap-3 items-start cursor-pointer transition-all ${theme.sidebarHover || "hover:bg-white/5"}`}>
                           <div className="w-2 h-2 rounded-full bg-violet-400 mt-1.5" />
                           <div>
-                            <div className="text-xs font-semibold text-slate-300 leading-normal">{n.text}</div>
-                            <div className="text-[9px] text-slate-500 mt-1">{n.time}</div>
+                            <div className={`text-xs font-semibold leading-normal ${theme.textClass || "text-slate-300"}`}>{n.text}</div>
+                            <div className={`text-[9px] mt-1 ${theme.subtextClass || "text-slate-500"}`}>{n.time}</div>
                           </div>
                         </div>
                       ))}
@@ -339,15 +298,15 @@ export default function DashboardLayout({ children, page, navigate }) {
             </div>
 
             {/* Dynamic theme customize toggler */}
-            <div className="flex items-center gap-1 bg-white/5 border border-white/5 p-1 rounded-2xl">
-              {["cafe", "minimal", "dark", "traditional"].map((th) => (
+            <div className={`flex items-center gap-1 p-1 rounded-2xl border ${theme.buttonSecondary || "bg-white/5 border-white/5"}`}>
+              {Object.keys(THEMES).map((th) => (
                 <button
                   key={th}
                   onClick={() => setTheme(th)}
                   className={`px-2 py-1 rounded-xl text-[9px] font-black uppercase transition-all ${
                     currentThemeId === th 
                       ? "bg-primary text-white" 
-                      : "text-slate-400 hover:text-slate-200"
+                      : `${theme.subtextClass || "text-slate-400 hover:text-slate-200"}`
                   }`}
                   title={`Switch to ${th} theme`}
                 >
@@ -359,8 +318,59 @@ export default function DashboardLayout({ children, page, navigate }) {
         </header>
 
         {/* Content Box */}
-        <div className="flex-1 overflow-y-auto p-6 md:p-8 no-scrollbar bg-slate-50 dark:bg-slate-950/40">
-          {children}
+        <div className="flex-1 overflow-y-auto p-6 md:p-8 no-scrollbar bg-transparent relative overflow-hidden z-0">
+          {/* Liquid Dynamic Fluid Glass Background Glow Blobs */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+            <motion.div 
+              animate={{
+                x: [0, 40, -30, 0],
+                y: [0, -50, 30, 0],
+                scale: [1, 1.15, 0.85, 1]
+              }}
+              transition={{
+                duration: 22,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className={`absolute top-10 left-10 w-80 h-80 rounded-full blur-[120px] transition-colors duration-500 ${
+                isDarkMode ? "bg-rose-500/10" : "bg-rose-400/5"
+              }`}
+            />
+            <motion.div 
+              animate={{
+                x: [0, -40, 30, 0],
+                y: [0, 40, -40, 0],
+                scale: [1, 0.85, 1.15, 1]
+              }}
+              transition={{
+                duration: 28,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className={`absolute bottom-10 right-10 w-96 h-96 rounded-full blur-[140px] transition-colors duration-500 ${
+                isDarkMode ? "bg-violet-600/12" : "bg-sky-400/6"
+              }`}
+            />
+            <motion.div 
+              animate={{
+                x: [0, 30, -20, 0],
+                y: [0, 30, -20, 0],
+                scale: [1, 1.1, 0.9, 1]
+              }}
+              transition={{
+                duration: 19,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className={`absolute top-1/3 left-1/3 w-72 h-72 rounded-full blur-[100px] transition-colors duration-500 ${
+                isDarkMode ? "bg-emerald-500/6" : "bg-violet-400/4"
+              }`}
+            />
+          </div>
+
+          <div className="relative z-10">
+            {children}
+          </div>
         </div>
       </div>
     </div>

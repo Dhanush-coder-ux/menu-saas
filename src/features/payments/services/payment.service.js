@@ -1,7 +1,4 @@
-/**
- * Production-ready mock payment gateway service.
- * Simulates Stripe/Razorpay webhook callbacks and UPI deep link routing.
- */
+
 export const paymentService = {
   /**
    * Simulates a UPI intent flow transaction.

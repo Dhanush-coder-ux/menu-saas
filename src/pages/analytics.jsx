@@ -3,9 +3,16 @@ import { motion } from "framer-motion";
 import { BarChart3, TrendingUp, Users, RefreshCw, Calendar, ArrowUpRight } from "lucide-react";
 import { DAYS } from "../constants/config";
 import { ANALYTICS } from "../constants/mock-data";
+import { apiService } from "../services/api";
 import Card from "../components/ui/Card";
 
 export default function AnalyticsPage() {
+  const [analytics, setAnalytics] = React.useState(ANALYTICS);
+
+  React.useEffect(() => {
+    apiService.getAnalytics().then(setAnalytics);
+  }, []);
+
   const stats = [
     { label: "Monthly Revenue", value: "₹3.4L", growth: "+22.1%", icon: <TrendingUp className="w-4 h-4 text-violet-400" /> },
     { label: "Total Orders", value: "1,428", growth: "+15.3%", icon: <BarChart3 className="w-4 h-4 text-pink-400" /> },
@@ -45,8 +52,8 @@ export default function AnalyticsPage() {
           <h3 className="text-sm font-bold tracking-tight mb-1">Revenue Trend — Last 7 Days</h3>
           <p className="text-[10px] text-slate-500 mb-6">Daily sales volume comparison</p>
           <div className="flex items-end gap-3 h-44 pt-4 border-b border-white/5">
-            {ANALYTICS.weeklyData.map((v, i) => {
-              const max = Math.max(...ANALYTICS.weeklyData);
+            {analytics.weeklyData.map((v, i) => {
+              const max = Math.max(...analytics.weeklyData);
               const heightPct = (v / max) * 100;
               return (
                 <div key={i} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
@@ -71,8 +78,8 @@ export default function AnalyticsPage() {
           <h3 className="text-sm font-bold tracking-tight mb-1">Hourly Order Distribution</h3>
           <p className="text-[10px] text-slate-500 mb-6">Identifies active rush periods throughout today</p>
           <div className="flex items-end gap-2.5 h-44 pt-4 border-b border-white/5">
-            {ANALYTICS.hourlyData.map((v, i) => {
-              const max = Math.max(...ANALYTICS.hourlyData);
+            {analytics.hourlyData.map((v, i) => {
+              const max = Math.max(...analytics.hourlyData);
               const heightPct = (v / max) * 100;
               return (
                 <div key={i} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
@@ -111,7 +118,7 @@ export default function AnalyticsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-xs">
-                {ANALYTICS.topItems.map((item) => (
+                {analytics.topItems.map((item) => (
                   <tr key={item.id}>
                     <td className="py-3">
                       <div className="flex gap-2.5 items-center">

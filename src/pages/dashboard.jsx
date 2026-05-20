@@ -4,11 +4,22 @@ import { DollarSign, ShoppingBag, Users, Clock, Flame, ArrowRight, UserPlus, Pla
 import { useOrderStore } from "../store/use-order-store";
 import { STATUS_CONFIG, DAYS } from "../constants/config";
 import { ANALYTICS, TEAM_MEMBERS } from "../constants/mock-data";
+import { apiService } from "../services/api";
+import { useThemeStore } from "../store/use-theme-store";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 
 export default function Dashboard() {
   const { orders, advanceOrder } = useOrderStore();
+  const [analytics, setAnalytics] = React.useState(ANALYTICS);
+  const [teamMembers, setTeamMembers] = React.useState(TEAM_MEMBERS);
+  const { theme } = useThemeStore();
+
+  React.useEffect(() => {
+    apiService.getAnalytics().then(setAnalytics);
+    apiService.getTeamMembers().then(setTeamMembers);
+  }, []);
+
   const activeOrders = orders.filter(o => o.status !== "completed");
 
   const getMetricIcon = (label) => {
@@ -31,7 +42,7 @@ export default function Dashboard() {
     <motion.div 
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-6 text-left"
+      className={`space-y-6 text-left ${theme.textClass || "text-slate-100"}`}
     >
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -42,13 +53,13 @@ export default function Dashboard() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: idx * 0.05 }}
             whileHover={{ y: -3 }}
-            className={`p-5 rounded-3xl border backdrop-blur-xl shadow-lg transition-all duration-150 ${m.color}`}
+            className={`p-5 rounded-3xl border backdrop-blur-xl shadow-lg transition-all duration-150 ${theme.cardClass || m.color}`}
           >
             <div className="flex justify-between items-center mb-3">
-              <span className="text-[10px] font-bold text-slate-500 tracking-wider uppercase">{m.label}</span>
+              <span className={`text-[10px] font-bold tracking-wider uppercase ${theme.subtextClass || "text-slate-500"}`}>{m.label}</span>
               <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center">{getMetricIcon(m.label)}</div>
             </div>
-            <div className="text-2xl font-black">{m.value}</div>
+            <div className={`text-2xl font-black ${theme.textClass || "text-slate-100"}`}>{m.value}</div>
             <span className="text-[10px] text-emerald-400 font-extrabold mt-1 inline-block">{m.growth} vs last week</span>
           </motion.div>
         ))}
@@ -57,12 +68,12 @@ export default function Dashboard() {
       {/* Grid: Interactive charts & live orders */}
       <div className="grid md:grid-cols-2 gap-6">
         {/* custom dynamic SVG bar chart */}
-        <Card className="p-6">
-          <h3 className="text-sm font-bold tracking-tight mb-1">Weekly Revenue Velocity</h3>
-          <p className="text-[10px] text-slate-500 mb-6">Sales totals over the last 7 active week cycles</p>
-          <div className="flex items-end gap-3 h-44 pt-4 border-b border-white/5">
-            {ANALYTICS.weeklyData.map((v, i) => {
-              const max = Math.max(...ANALYTICS.weeklyData);
+        <Card className={`p-6 ${theme.cardClass || ""}`}>
+          <h3 className={`text-sm font-bold tracking-tight mb-1 ${theme.textClass || ""}`}>Weekly Revenue Velocity</h3>
+          <p className={`text-[10px] mb-6 ${theme.subtextClass || "text-slate-500"}`}>Sales totals over the last 7 active week cycles</p>
+          <div className={`flex items-end gap-3 h-44 pt-4 border-b ${theme.dividerClass || "border-white/5"}`}>
+            {analytics.weeklyData.map((v, i) => {
+              const max = Math.max(...analytics.weeklyData);
               const heightPct = (v / max) * 100;
               return (
                 <div key={i} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
@@ -75,7 +86,7 @@ export default function Dashboard() {
                     transition={{ delay: i * 0.05, type: "spring", stiffness: 100 }}
                     className={`w-full rounded-t-xl transition-all duration-300 ${i === 6 ? "bg-gradient-to-t from-pink-500 to-rose-500 shadow-lg shadow-pink-500/20" : "bg-gradient-to-t from-violet-600 to-pink-500"}`}
                   />
-                  <span className="text-[9px] text-slate-500 mt-2 font-bold uppercase">{DAYS[i]}</span>
+                  <span className={`text-[9px] mt-2 font-bold uppercase ${theme.subtextClass || "text-slate-500"}`}>{DAYS[i]}</span>
                 </div>
               );
             })}
@@ -83,9 +94,9 @@ export default function Dashboard() {
         </Card>
 
         {/* Live prep order pipeline cards */}
-        <Card className="p-6 flex flex-col max-h-[300px]">
-          <h3 className="text-sm font-bold tracking-tight mb-1">Live Kitchen Pipeline</h3>
-          <p className="text-[10px] text-slate-500 mb-4">{activeOrders.length} active orders currently preparing</p>
+        <Card className={`p-6 flex flex-col max-h-[300px] ${theme.cardClass || ""}`}>
+          <h3 className={`text-sm font-bold tracking-tight mb-1 ${theme.textClass || ""}`}>Live Kitchen Pipeline</h3>
+          <p className={`text-[10px] mb-4 ${theme.subtextClass || "text-slate-500"}`}>{activeOrders.length} active orders currently preparing</p>
           
           <div className="flex-1 overflow-y-auto space-y-3 pr-1">
             {activeOrders.map((o) => {
@@ -94,23 +105,23 @@ export default function Dashboard() {
                 <motion.div
                   layout
                   key={o.id}
-                  className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 flex justify-between items-start gap-4 transition-all"
+                  className={`p-4 rounded-2xl border flex justify-between items-start gap-4 transition-all ${theme.buttonSecondary || "bg-white/5 border-white/5 hover:border-white/10"}`}
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-black text-slate-200">{o.id}</span>
+                      <span className={`font-mono text-xs font-black ${theme.textClass || "text-slate-200"}`}>{o.id}</span>
                       <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${s.bg}20`, color: s.color }}>
                         {s.dot} {s.label}
                       </span>
                     </div>
-                    <div className="text-[11px] text-slate-400 font-semibold">{o.items.join(" · ")}</div>
-                    <div className="text-[9px] text-slate-500 flex gap-2">
+                    <div className={`text-[11px] font-semibold ${theme.textClass || "text-slate-400"}`}>{o.items.join(" · ")}</div>
+                    <div className={`text-[9px] flex gap-2 ${theme.subtextClass || "text-slate-500"}`}>
                       <span>🪑 {o.table}</span>
                       <span>👤 {o.customer}</span>
                     </div>
                   </div>
                   <div className="text-right flex flex-col items-end gap-2">
-                    <span className="text-xs font-bold text-slate-200">₹{o.total}</span>
+                    <span className={`text-xs font-bold ${theme.textClass || "text-slate-200"}`}>₹{o.total}</span>
                     <Button 
                       variant="success" 
                       className="px-3 py-1 text-[10px] font-extrabold rounded-lg flex items-center gap-1.5"
@@ -124,7 +135,7 @@ export default function Dashboard() {
               );
             })}
             {activeOrders.length === 0 && (
-              <div className="py-10 text-center text-xs text-slate-500">
+              <div className={`py-10 text-center text-xs ${theme.subtextClass || "text-slate-500"}`}>
                 🎉 No active orders in preparation queue.
               </div>
             )}
@@ -135,24 +146,24 @@ export default function Dashboard() {
       {/* Row 3: Bestselling & Team Directory */}
       <div className="grid md:grid-cols-2 gap-6">
         {/* Top-selling custom meters */}
-        <Card className="p-6">
+        <Card className={`p-6 ${theme.cardClass || ""}`}>
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h3 className="text-sm font-bold tracking-tight mb-1">Top Selling Items</h3>
-              <p className="text-[10px] text-slate-500">Inventory performance stats this week</p>
+              <h3 className={`text-sm font-bold tracking-tight mb-1 ${theme.textClass || ""}`}>Top Selling Items</h3>
+              <p className={`text-[10px] ${theme.subtextClass || "text-slate-500"}`}>Inventory performance stats this week</p>
             </div>
             <Flame className="w-5 h-5 text-amber-500" />
           </div>
           <div className="space-y-4">
-            {ANALYTICS.topItems.map((item, idx) => (
+            {analytics.topItems.map((item, idx) => (
               <div key={item.id} className="space-y-2">
                 <div className="flex justify-between text-xs font-semibold">
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-500 font-mono">0{idx + 1}</span>
+                    <span className={`font-mono ${theme.subtextClass || "text-slate-500"}`}>0{idx + 1}</span>
                     <span>{item.img}</span>
-                    <span className="text-slate-200">{item.name}</span>
+                    <span className={theme.textClass || "text-slate-200"}>{item.name}</span>
                   </div>
-                  <span className="text-slate-400">{item.orders} orders</span>
+                  <span className={theme.subtextClass || "text-slate-400"}>{item.orders} orders</span>
                 </div>
                 <div className="h-2 rounded-full bg-white/5 overflow-hidden">
                   <motion.div 
@@ -168,24 +179,24 @@ export default function Dashboard() {
         </Card>
 
         {/* Team / Staff directory widgets */}
-        <Card className="p-6 flex flex-col justify-between">
+        <Card className={`p-6 flex flex-col justify-between ${theme.cardClass || ""}`}>
           <div>
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h3 className="text-sm font-bold tracking-tight mb-1">Staff & Team Directory</h3>
-                <p className="text-[10px] text-slate-500">Manage active branches and kitchen members</p>
+                <h3 className={`text-sm font-bold tracking-tight mb-1 ${theme.textClass || ""}`}>Staff & Team Directory</h3>
+                <p className={`text-[10px] ${theme.subtextClass || "text-slate-500"}`}>Manage active branches and kitchen members</p>
               </div>
               <UserPlus className="w-4 h-4 text-violet-400 cursor-pointer" />
             </div>
             <div className="space-y-4">
-              {TEAM_MEMBERS.map((t) => (
-                <div key={t.name} className="flex items-center gap-3 p-2 rounded-2xl bg-white/5 border border-white/5">
+              {teamMembers.map((t) => (
+                <div key={t.name} className={`flex items-center gap-3 p-2 rounded-2xl border ${theme.buttonSecondary || "bg-white/5 border-white/5"}`}>
                   <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 to-pink-600 flex items-center justify-center font-bold text-xs text-white">
                     {t.avatar}
                   </div>
                   <div className="text-left">
-                    <div className="text-xs font-bold text-slate-200">{t.name}</div>
-                    <div className="text-[9px] text-slate-500 font-semibold">{t.role}</div>
+                    <div className={`text-xs font-bold ${theme.textClass || "text-slate-200"}`}>{t.name}</div>
+                    <div className={`text-[9px] font-semibold ${theme.subtextClass || "text-slate-500"}`}>{t.role}</div>
                   </div>
                   <span className="ml-auto text-[9px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-bold">
                     Active

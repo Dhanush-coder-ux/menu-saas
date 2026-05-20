@@ -3,12 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Package, ClipboardList, Check, Clock, ChevronRight, Play, CheckCircle2, ShoppingBag } from "lucide-react";
 import { useOrderStore } from "../store/use-order-store";
 import { STATUS_CONFIG } from "../constants/config";
+import { useThemeStore } from "../store/use-theme-store";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 
 export default function OrdersPage() {
   const { orders, advanceOrder } = useOrderStore();
   const [filterStatus, setFilterStatus] = useState("all"); // all, pending, preparing, ready, completed
+  const { theme } = useThemeStore();
 
   const filtered = orders.filter(
     (o) => filterStatus === "all" || o.status === filterStatus
@@ -25,7 +27,7 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="space-y-6 text-left page-enter">
+    <div className={`space-y-6 text-left page-enter ${theme.textClass || "text-slate-100"}`}>
       {/* Category Pills & Pipeline Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
@@ -41,7 +43,7 @@ export default function OrdersPage() {
             className={`p-3 rounded-2xl text-xs font-bold text-center flex flex-col items-center gap-1.5 transition-all select-none border cursor-pointer ${
               filterStatus === s.id 
                 ? "bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-102" 
-                : "bg-white/5 border-white/5 text-slate-400 hover:text-white"
+                : `${theme.buttonSecondary || "bg-white/5 border-white/5 text-slate-400 hover:text-white"}`
             }`}
           >
             <span>{s.label}</span>
@@ -65,35 +67,35 @@ export default function OrdersPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 300, damping: 28 }}
-                className="rounded-3xl border border-white/5 bg-white/5 p-6 backdrop-blur-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
+                className={`rounded-3xl border p-6 backdrop-blur-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 ${theme.cardClass || "border-white/5 bg-white/5"}`}
               >
                 <div className="space-y-2.5 text-left">
                   <div className="flex items-center gap-3">
-                    <span className="font-mono text-sm font-black text-slate-100">{order.id}</span>
-                    <span className="text-[10px] text-slate-500 font-bold">{order.time}</span>
+                    <span className={`font-mono text-sm font-black ${theme.textClass || "text-slate-100"}`}>{order.id}</span>
+                    <span className={`text-[10px] font-bold ${theme.subtextClass || "text-slate-500"}`}>{order.time}</span>
                     <span className="text-[10px] font-black px-2 py-0.5 rounded-full" style={{ background: `${s.bg}15`, color: s.color }}>
                       {s.dot} {s.label}
                     </span>
                   </div>
                   
                   {/* Order Items list */}
-                  <div className="text-xs font-semibold text-slate-300 tracking-wide flex items-center gap-1.5">
-                    <ShoppingBag className="w-3.5 h-3.5 text-slate-500" />
+                  <div className={`text-xs font-semibold tracking-wide flex items-center gap-1.5 ${theme.textClass || "text-slate-300"}`}>
+                    <ShoppingBag className={`w-3.5 h-3.5 ${theme.subtextClass || "text-slate-500"}`} />
                     <span>{order.items.join(" · ")}</span>
                   </div>
 
                   {/* Customer / Table coordinates */}
-                  <div className="flex gap-4 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                  <div className={`flex gap-4 text-[10px] font-bold uppercase tracking-wider ${theme.subtextClass || "text-slate-500"}`}>
                     <span>🪑 Table: {order.table}</span>
                     <span>👤 Customer: {order.customer}</span>
-                    {order.note && <span className="text-pink-400 font-black">📝 Notes: {order.note}</span>}
+                    {order.note && <span className="text-pink-500 font-black">📝 Notes: {order.note}</span>}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end border-t border-white/5 md:border-none pt-4 md:pt-0">
+                <div className={`flex items-center gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-none pt-4 md:pt-0 ${theme.dividerClass || "border-white/5"}`}>
                   <div className="text-left md:text-right">
-                    <span className="text-[9px] font-bold text-slate-500 block uppercase tracking-wide">Total Bill</span>
-                    <span className="text-sm font-extrabold text-slate-200">₹{order.total}</span>
+                    <span className={`text-[9px] font-bold block uppercase tracking-wide ${theme.subtextClass || "text-slate-500"}`}>Total Bill</span>
+                    <span className={`text-sm font-extrabold ${theme.textClass || "text-slate-200"}`}>₹{order.total}</span>
                   </div>
 
                   {order.status !== "completed" ? (
@@ -120,11 +122,11 @@ export default function OrdersPage() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="py-16 text-center text-slate-500 border border-white/5 rounded-3xl bg-white/5"
+              className={`py-16 text-center border rounded-3xl ${theme.cardClass || "border-white/5 bg-white/5"}`}
             >
-              <ClipboardList className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-              <h3 className="text-sm font-bold text-slate-400">No active orders in this pipeline</h3>
-              <p className="text-[10px] text-slate-500 max-w-xs mx-auto mt-1">Orders scanned and submitted by customers from table QR codes will materialize in real-time here.</p>
+              <ClipboardList className={`w-12 h-12 mx-auto mb-4 ${theme.subtextClass || "text-slate-600"}`} />
+              <h3 className={`text-sm font-bold ${theme.textClass || "text-slate-400"}`}>No active orders in this pipeline</h3>
+              <p className={`text-[10px] max-w-xs mx-auto mt-1 ${theme.subtextClass || "text-slate-500"}`}>Orders scanned and submitted by customers from table QR codes will materialize in real-time here.</p>
             </motion.div>
           )}
         </AnimatePresence>

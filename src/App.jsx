@@ -2,30 +2,42 @@ import React, { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./styles/global.css";
 import { useShopStore } from "./features/customer/store/use-shop-store";
+import { useAuthStore } from "./store/use-auth-store";
 
 // Import Layouts
 import DashboardLayout from "./layouts/dashboard-layout";
 
-// Import Pages
-import LandingPage from "./pages/landing";
-import PricingPage from "./pages/pricing";
-import AuthPage from "./pages/auth";
-import CustomerMenu from "./pages/customer-menu";
-import CheckoutPage from "./pages/checkout";
-import OrderTracking from "./pages/order-tracking";
-import Dashboard from "./pages/dashboard";
-import OrdersPage from "./pages/orders";
-import MenuManagement from "./pages/menu-management";
-import AIUpload from "./pages/ai-upload";
-import QRManagement from "./pages/qr-management";
-import AnalyticsPage from "./pages/analytics";
-import SettingsPage from "./pages/settings";
+// Import Centralized Router Configuration
+import { ROUTES } from "./router";
 
 const queryClient = new QueryClient();
 
 export default function App() {
-  const [page, setPage] = useState("landing");
-  const isDashboard = !["landing", "pricing", "login", "signup", "customer", "checkout", "tracking"].includes(page);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  // Dynamic initialization checking active session
+  const [page, setPage] = useState(() => {
+    const isAuth = useAuthStore.getState().isAuthenticated;
+    return isAuth ? "dashboard" : "landing";
+  });
+
+  // Keep routing and authentication state synchronized
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (page === "landing" || page === "login" || page === "signup") {
+        setPage("dashboard");
+      }
+    } else {
+      const active = ROUTES.find((r) => r.id === page);
+      if (active && active.isProtected) {
+        setPage("landing");
+      }
+    }
+  }, [isAuthenticated, page]);
+
+  // Dynamically determine current active route & layout from centralized routing rules
+  const activeRoute = ROUTES.find((r) => r.id === page);
+  const isDashboard = activeRoute ? activeRoute.hasSidebar : false;
 
   const navigate = (p) => {
     setPage(p);
@@ -56,38 +68,11 @@ export default function App() {
   }, []);
 
   const renderPage = () => {
-    switch (page) {
-      case "landing":
-        return <LandingPage onNavigate={navigate} />;
-      case "pricing":
-        return <PricingPage onNavigate={navigate} />;
-      case "login":
-        return <AuthPage mode="login" onNavigate={navigate} />;
-      case "signup":
-        return <AuthPage mode="signup" onNavigate={navigate} />;
-      case "customer":
-        return <CustomerMenu onNavigate={navigate} />;
-      case "checkout":
-        return <CheckoutPage onNavigate={navigate} />;
-      case "tracking":
-        return <OrderTracking onNavigate={navigate} />;
-      case "dashboard":
-        return <Dashboard />;
-      case "orders":
-        return <OrdersPage />;
-      case "menu":
-        return <MenuManagement />;
-      case "ai-upload":
-        return <AIUpload />;
-      case "qr":
-        return <QRManagement />;
-      case "analytics":
-        return <AnalyticsPage />;
-      case "settings":
-        return <SettingsPage />;
-      default:
-        return <Dashboard />;
+    if (activeRoute) {
+      return activeRoute.element({ onNavigate: navigate });
     }
+    const fallbackRoute = ROUTES.find((r) => r.id === "landing");
+    return fallbackRoute ? fallbackRoute.element({ onNavigate: navigate }) : null;
   };
 
   return (
